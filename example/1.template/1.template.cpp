@@ -41,7 +41,7 @@ public:
         std::cout << "cstatck sonstruct()" << std::endl;
     }
 
-    friend bool operator==(const cstatck<T, squence>&, const cstatck<T, squence>&);
+//    friend bool operator==(const cstatck<T, squence>&, const cstatck<T, squence>&);
 private:
     squence     m_data;
 };
