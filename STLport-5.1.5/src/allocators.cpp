@@ -70,8 +70,8 @@ inline void* __stlp_chunk_malloc(size_t __bytes) { return _STLP_STD::__stl_new(_
 inline void __stlp_chunck_free(void* __p) { _STLP_STD::__stl_delete(__p); }
 #  endif
 #endif  // !_DEBUG
-
-#define _S_FREELIST_INDEX(__bytes) ((__bytes - size_t(1)) >> (int)_ALIGN_SHIFT)
+// 1000 -> 8 // 0111 -> 7  // 0111 0000
+#define _S_FREELIST_INDEX(__bytes) ((__bytes - size_t(1)) >> (int)_ALIGN_SHIFT) // x64 = 4-- x86 =3
 
 _STLP_BEGIN_NAMESPACE
 
@@ -211,6 +211,21 @@ struct _Node_alloc_obj {
 
 class __node_alloc_impl {
 _STLP_PRIVATE:
+    /**
+     * 先给个例bai子吧,假设4位十进制数
+        a = 7,b = 3
+        (0111 + 0011) & (~0011)
+        = (1010)&(1100) = 1000
+        得到的du结果是8
+        同样zhi的
+        （dao21 + 7）&（~7）= 24
+        （010101 + 000111）&（111000） = （011100）&（111000） = （011000） = 24
+        就是 6个字节 经过&~后就是 8 个字节大小的内存
+
+
+
+     上8的陪数
+     */
   static inline size_t _STLP_CALL _S_round_up(size_t __bytes)
   { return (((__bytes) + (size_t)_ALIGN-1) & ~((size_t)_ALIGN - 1)); }
 

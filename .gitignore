@@ -1,2 +1,5 @@
 .idea/*
+cmake-build-debug/*
+bin/*
 example/1.template/cmake-build-debug/*
+build/*

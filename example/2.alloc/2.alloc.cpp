@@ -3,7 +3,7 @@
 
 	author:			chensong
 
-	purpose:		1.tempalte
+	purpose:		2.alloc
 我可能会遇到很多的人，听他们讲好2多的故事，我来写成故事或编成歌，用我学来的各种乐器演奏它。
 然后还可能在一个国家遇到一个心仪我的姑娘，她可能会被我帅气的外表捕获，又会被我深邃的内涵吸引，在某个下雨的夜晚，她会全身淋透然后要在我狭小的住处换身上的湿衣服。
 3小时候后她告诉我她其实是这个国家的公主，她愿意向父皇求婚。我不得已告诉她我是穿越而来的男主角，我始终要回到自己的世界。
@@ -18,47 +18,22 @@
 
 //👌
 
+
+
 #include <iostream>
-
-class ccalloc{};
-
-template <class T, class Alloc = ccalloc, size_t  buffsize =0>
-class cqueue
-{
-public:
-    cqueue()
-    {
-        std::cout << "cqueue construct()" << std::endl;
-    }
-};
-
-template <class T, class squence = cqueue<T> >
-class cstatck
-{
-public:
-    cstatck()
-    {
-        std::cout << "cstatck sonstruct()" << std::endl;
-    }
-
-//    friend bool operator==(const cstatck<T, squence>&, const cstatck<T, squence>&);
-private:
-    squence     m_data;
-};
-
-template <class T, class squence>
-bool operator==(const cstatck<T, squence>&x, const cstatck<T, squence>&y)
-{
-    std::cout << "operator ==<T>" << std::endl;
-    return true;
-}
+#include <vector>
+#include "calloc.h"
 
 int main(int argc, char *argv[])
 {
+    int la[] = {1, 3, 4, 5, 7};
 
-    cstatck<int> m1;
-    cstatck<int> m2;
-    m1 == m2;
-
-    return 0;
+    unsigned int i;
+	std::vector<int, chen::callocator<int>> ivec;// (la, la + 5);
+   // for (int i = 0; i < static_cast<int>(ivec.size()); ++i)
+    {
+     //   std::cout << "i =" << i << ", value =<< ivec[i] " <<std::endl;
+    }
+    
+    return EXIT_SUCCESS;
 }
