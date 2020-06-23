@@ -24,6 +24,7 @@
 #include <vector>
 #include "calloc.h"
 #include "cnew.h"
+#include "calloc_mem_pool.h"
 int main(int argc, char *argv[])
 {
     uint64_t la[] = {1, 3, 4, 5, 7};
