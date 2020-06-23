@@ -26,13 +26,13 @@
 
 int main(int argc, char *argv[])
 {
-    int la[] = {1, 3, 4, 5, 7};
+    uint64_t la[] = {1, 3, 4, 5, 7};
 
-    unsigned int i;
-	std::vector<int, chen::callocator<int>> ivec;// (la, la + 5);
-   // for (int i = 0; i < static_cast<int>(ivec.size()); ++i)
+
+	std::vector<uint64_t, chen::callocator<uint64_t> > ivec(la, la + 5);
+    for (int i = 0; i < static_cast<int>(ivec.size()); ++i)
     {
-     //   std::cout << "i =" << i << ", value =<< ivec[i] " <<std::endl;
+       std::cout << "i =" << i << ", value = " << ivec[i] <<std::endl;
     }
     
     return EXIT_SUCCESS;
