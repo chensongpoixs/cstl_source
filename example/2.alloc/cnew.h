@@ -1,9 +1,9 @@
 /***********************************************************************************************
-	created: 		2020-06-22
+	created: 		2020-06-23
 
 	author:			chensong
 
-	purpose:		2.alloc
+	purpose:		cnew.h
 我可能会遇到很多的人，听他们讲好2多的故事，我来写成故事或编成歌，用我学来的各种乐器演奏它。
 然后还可能在一个国家遇到一个心仪我的姑娘，她可能会被我帅气的外表捕获，又会被我深邃的内涵吸引，在某个下雨的夜晚，她会全身淋透然后要在我狭小的住处换身上的湿衣服。
 3小时候后她告诉我她其实是这个国家的公主，她愿意向父皇求婚。我不得已告诉她我是穿越而来的男主角，我始终要回到自己的世界。
@@ -15,25 +15,63 @@
 沿着自己的回忆，一个个的场景忽闪而过，最后发现，我的本心，在我写代码的时候，会回来。
 安静，淡然，代码就是我的一切，写代码就是我本心回归的最好方式，我还没找到本心猎手，但我相信，顺着这个线索，我一定能顺藤摸瓜，把他揪出来。
 ************************************************************************************************/
+//
 
-//👌
+#ifndef CSTL_SOURCE_CNEW_H
+#define CSTL_SOURCE_CNEW_H
 
-
-
-#include <iostream>
-#include <vector>
-#include "calloc.h"
-#include "cnew.h"
-int main(int argc, char *argv[])
-{
-    uint64_t la[] = {1, 3, 4, 5, 7};
+#include <type_traits>
+namespace  chen {
 
 
-	std::vector<uint64_t, chen::callocator<uint64_t> > ivec(la, la + 5);
-    for (int i = 0; i < static_cast<int>(ivec.size()); ++i)
+    template <class T1, class T2>
+    inline void construct(T1*p, const T2& value)
     {
-       std::cout << "i =" << i << ", value = " << ivec[i] <<std::endl;
+        new (p) T1(value); // inivke construct
     }
-    
-    return EXIT_SUCCESS;
+
+    template <class T>
+    inline void destroy(T* pointer)
+    {
+        pointer->~T(); // inivke destroy();
+    }
+
+    template <class ForwardIterator>
+    inline void destroy(ForwardIterator first, ForwardIterator last)
+    {
+        __destroy(first, last, value_type(first)); // __type_traites<> ----->>>>>>>
+    }
+
+//    template <class ForwardIterator, class T>
+//    inline __destroy(ForwardIterator first, ForwardIterator last, T*)
+//    {
+//        // // value_type  --->>>
+//        typedef typename __type_traits<T>::has_trivial_destrutor trivial_destructor;
+//        __destroy_aux(first, last, trivial_destructor());
+//    }
+//
+//    template <class ForwardIterator>
+//    inline void __destroy_aux(ForwardIterator first, ForwardIterator last, __false_type)
+//    {
+//        for (: first < last; ++first)
+//        {
+//            destroy(&*first);
+//        }
+//    }
+//    template <class ForwardIterator>
+//    inline void __destroy_aux(ForwardIterator , ForwardIterator, __true_type){}
+//
+//    inline void destroy(char *, char *){}
+//    inline void destroy(wchar_t*, wchar_t*){}
+
+
+
+
+
+
+
+
+
+
 }
+#endif //CSTL_SOURCE_CNEW_H
