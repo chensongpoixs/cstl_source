@@ -21,39 +21,49 @@
 #define CSTL_SOURCE_CALLOC_H
 
 #include <iostream>
-#include <new>
+//#include <new>
+#include "calloc_mem_pool.h"
 namespace  chen {
 
-    template <class T>
-    inline T* __allocate(ptrdiff_t size, T*/*T**/)
+    namespace callocate
     {
-//        set_new_handler(0);
-        std::cout << "sizeof(T) = " << sizeof(T) << std::endl;
-        T* temp = (T*)::operator new ((size_t)(size * sizeof(T)));
-
-        if (!temp)
+        template <class T>
+        inline T* __allocate(ptrdiff_t size, T*/*T**/)
         {
-            std::cerr << "alloc failed !!!" << std::endl;
-            exit(1);
+//        set_new_handler(0);
+            std::cout << "sizeof(T) = " << sizeof(T) << std::endl;
+//            T* temp = (T*)::operator new ((size_t)(size * sizeof(T)));
+
+            T* temp = (T*) csingle_client_alloc::allocate((size_t)(size * sizeof(T)));
+            csingle_client_alloc::show_info();
+            if (!temp)
+            {
+                std::cerr << "alloc failed !!!" << std::endl;
+                exit(1);
+            }
+            return temp;
         }
-        return temp;
-    }
-    template <class T>
-    inline void __deallocate(T* buffer)
-    {
-        ::operator delete (buffer);
-    }
+        template <class T>
+        inline void __deallocate(T* buffer, size_t size)
+        {
+//            ::operator delete (buffer);
+            // 释放的内存的大小
+            std::cout << "delete size = " << size * sizeof(T) << std::endl;
+            csingle_client_alloc::deallocate(buffer, size * sizeof(T));
+            csingle_client_alloc::show_info();
+        }
 
-    template <class T1, class T2>
-    inline void __construct (T1*p, const T2& value)
-    {
-        new (p)T1(value);
-    }
+        template <class T1, class T2>
+        inline void __construct (T1*p, const T2& value)
+        {
+            new (p)T1(value);
+        }
 
-    template <class T>
-    inline void __destroy(T*ptr)
-    {
-        ptr->~T();
+        template <class T>
+        inline void __destroy(T*ptr)
+        {
+            ptr->~T();
+        }
     }
 
     template <class T>
@@ -75,22 +85,22 @@ namespace  chen {
         };
         pointer allocate(size_type n, const void * hint=0)
         {
-            return __allocate((difference_type)n, (pointer)0);
+            return callocate::__allocate((difference_type)n, (pointer)0);
         }
 
         void deallocate(pointer p, size_type n)
         {
-            __deallocate(p);
+            callocate::__deallocate(p, n);
         }
 
         void construct(pointer p, const T& value)
         {
-            __construct(p, value);
+            callocate::__construct(p, value);
         }
 
         void destroy(pointer ptr)
         {
-            __destroy(ptr);
+            callocate::__destroy(ptr);
         }
 
         pointer address(reference x)
@@ -108,6 +118,16 @@ namespace  chen {
             return size_type(UINT_MAX/ sizeof(T));
         }
     };
+
+
+
+
+
+
+
+
+
+
 
 }// chen
 #endif //CSTL_SOURCE_CALLOC_H

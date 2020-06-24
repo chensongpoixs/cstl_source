@@ -1,9 +1,9 @@
 /***********************************************************************************************
-	created: 		2020-06-22
+	created: 		2020-06-24
 
 	author:			chensong
 
-	purpose:		2.alloc
+	purpose:		cnew_alloc
 我可能会遇到很多的人，听他们讲好2多的故事，我来写成故事或编成歌，用我学来的各种乐器演奏它。
 然后还可能在一个国家遇到一个心仪我的姑娘，她可能会被我帅气的外表捕获，又会被我深邃的内涵吸引，在某个下雨的夜晚，她会全身淋透然后要在我狭小的住处换身上的湿衣服。
 3小时候后她告诉我她其实是这个国家的公主，她愿意向父皇求婚。我不得已告诉她我是穿越而来的男主角，我始终要回到自己的世界。
@@ -15,57 +15,42 @@
 沿着自己的回忆，一个个的场景忽闪而过，最后发现，我的本心，在我写代码的时候，会回来。
 安静，淡然，代码就是我的一切，写代码就是我本心回归的最好方式，我还没找到本心猎手，但我相信，顺着这个线索，我一定能顺藤摸瓜，把他揪出来。
 ************************************************************************************************/
+//
+#ifndef CSTL_SOURCE_CNEW_ALLOC_H
+#define CSTL_SOURCE_CNEW_ALLOC_H
 
-//👌
+namespace chen {
+// New-based allocator.  Typically slower than default alloc below.
+// Typically thread-safe and more storage efficient.
+    template <int inst>
+    class cnew_alloc {
+    public:
+        // this one is needed for proper simple_alloc wrapping
+        typedef char value_type;
+        static void*  allocate(size_t n)
+        {
+            return 0 == n ? 0 : ::operator new(n);
+        }
+        static void*  reallocate(void *p, size_t old_sz, size_t new_sz)
+        {
+            void* result = allocate(new_sz);
+            size_t copy_sz = new_sz > old_sz? old_sz : new_sz;
+            memcpy(result, p, copy_sz);
+            deallocate(p, old_sz);
+            return result;
+        }
+        static void deallocate(void* p)
+        {
+            ::operator delete(p);
+        }
+        static void deallocate(void* p, size_t)
+        {
+            ::operator delete(p);
+        }
+    };
 
-
-
-#include <iostream>
-#include <vector>
-#include "calloc.h"
-#include "cnew.h"
-#include "cmalloc_alloc.h"
-#include "calloc_mem_pool.h"
-#include "calloc_adaptor.h"
-
-
-static size_t chunk() {
-    return sizeof(uint64_t)/sizeof(int)+ (size_t)(sizeof(int)%sizeof(uint64_t)>0);
-}
-int main(int argc, char *argv[])
-{
-    uint64_t la[] = {1, 3, 4, 5, 7};
-
-
-	std::vector<uint64_t, chen::callocator<uint64_t> > ivec(la, la + 5);
-	std::cout << "ivec.capacity()  = " << ivec.capacity() << std::endl;
-//    std::vector<uint64_t , chen::calloc_adaptor<uint64_t , chen::csingle_client_alloc> > ivec(la, la +5);
-	for (int i = 0; i < static_cast<int>(ivec.size()); ++i)
-    {
-       std::cout << "i =" << i << ", value = " << ivec[i] <<std::endl;
-    }
-
-//    for (int i = 0; i  < 10; ++i)
-//    {
-//        ivec.insert(i+10);
-//    }
-
-    printf("//////////////////////\n");
-    int las[] = {111, 344, 555, 666, 777};
-    std::vector<int , chen::callocator<int > > new_vec(las, las +5);
-    std::cout << "new_vec.capacity()  = " << new_vec.capacity() << std::endl;
-//    std::vector<uint64_t , chen::calloc_adaptor<uint64_t , chen::csingle_client_alloc> > ivec(la, la +5);
-    for (int i = 0; i < static_cast<int>(new_vec.size()); ++i)
-    {
-        std::cout << "new_veci =" << i << ", value = " << ivec[i] <<std::endl;
-    }
+    typedef cnew_alloc<0> new_alloc;
 
 
-    std::cout << "chunk =  " << chunk()  << std::endl;
-
-    std::cout << "(sizeof(int)%sizeof(uint64_t) =" << sizeof(int)%sizeof(uint64_t) << std::endl;
-
-    printf("sizeof(uintint64) = %lu\n", sizeof(int));
-    printf("sizeof(uint64) = %lu\n", sizeof(uint64_t));
-    return EXIT_SUCCESS;
-}
+} // namespace chen
+#endif //CSTL_SOURCE_CNEW_ALLOC_H

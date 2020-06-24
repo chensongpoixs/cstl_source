@@ -20,7 +20,7 @@
 #ifndef CSTL_SOURCE_CNEW_H
 #define CSTL_SOURCE_CNEW_H
 
-#include <type_traits>
+#include "ctype_traits.h"
 namespace  chen {
 
 
@@ -42,27 +42,27 @@ namespace  chen {
         __destroy(first, last, value_type(first)); // __type_traites<> ----->>>>>>>
     }
 
-//    template <class ForwardIterator, class T>
-//    inline __destroy(ForwardIterator first, ForwardIterator last, T*)
-//    {
-//        // // value_type  --->>>
-//        typedef typename __type_traits<T>::has_trivial_destrutor trivial_destructor;
-//        __destroy_aux(first, last, trivial_destructor());
-//    }
-//
-//    template <class ForwardIterator>
-//    inline void __destroy_aux(ForwardIterator first, ForwardIterator last, __false_type)
-//    {
-//        for (: first < last; ++first)
-//        {
-//            destroy(&*first);
-//        }
-//    }
-//    template <class ForwardIterator>
-//    inline void __destroy_aux(ForwardIterator , ForwardIterator, __true_type){}
-//
-//    inline void destroy(char *, char *){}
-//    inline void destroy(wchar_t*, wchar_t*){}
+    template <class ForwardIterator, class T>
+    inline void __destroy(ForwardIterator first, ForwardIterator last, T*)
+    {
+        // // value_type  --->>>
+        typedef typename ctype_traits<T>::has_trivial_destructor trivial_destructor;
+        __destroy_aux(first, last, trivial_destructor());
+    }
+
+    template <class ForwardIterator>
+    inline void __destroy_aux(ForwardIterator first, ForwardIterator last, cfalse_type)
+    {
+        for (; first < last; ++first)
+        {
+            destroy(&*first);
+        }
+    }
+    template <class ForwardIterator>
+    inline void __destroy_aux(ForwardIterator , ForwardIterator, ctrue_type){}
+
+    inline void destroy(char *, char *){}
+    inline void destroy(wchar_t*, wchar_t*){}
 
 
 

@@ -85,7 +85,7 @@ __BEGIN_STL_NAMESPACE
 #endif
 
 __BEGIN_STL_NAMESPACE
-
+//////////////////////////////debug_alloc/////////////////////////////////
 // Allocator adaptor to check size arguments for debugging.
 // Reports errors using assert.  Checking can be disabled with
 // NDEBUG, but it's far better to just use the underlying allocator
@@ -132,6 +132,63 @@ public:
 
     static void * reallocate(void *p, size_t old_sz, size_t new_sz); 
 };
+template <class Alloc>
+void * debug_alloc<Alloc>::allocate(size_t n) {
+    size_t real_n = n + extra_before_chunk() + extra_after_chunk();
+    alloc_header *result = (alloc_header *)allocator_type::allocate(real_n);
+    memset((char*)result, shred_byte, real_n*sizeof(value_type));
+    result->magic = magic;
+    result->type_size = sizeof(value_type);
+    result->size = n;
+    return ((char*)result) + extra_before();
+}
+
+template <class Alloc>
+void debug_alloc<Alloc>::deallocate(void *p, size_t n) {
+    alloc_header * real_p = (alloc_header*)((char *)p - extra_before());
+    // check integrity
+    __stl_verbose_assert(real_p->magic != deleted_magic, __STL_MSG_DBA_DELETED_TWICE);
+    __stl_verbose_assert(real_p->magic == magic, __STL_MSG_DBA_NEVER_ALLOCATED);
+    __stl_verbose_assert(real_p->type_size == sizeof(value_type), 
+                         __STL_MSG_DBA_TYPE_MISMATCH);
+    __stl_verbose_assert(real_p->size == n, __STL_MSG_DBA_SIZE_MISMATCH);
+    // check pads on both sides
+    unsigned char* tmp;
+    for (tmp= (unsigned char*)(real_p+1); tmp < (unsigned char*)p; tmp++)
+        __stl_verbose_assert(*tmp==shred_byte, __STL_MSG_DBA_UNDERRUN);
+    size_t real_n= n + extra_before_chunk() + extra_after_chunk();
+    for (tmp= ((unsigned char*)p)+n*sizeof(value_type); 
+         tmp < ((unsigned char*)real_p)+real_n ; tmp++)
+        __stl_verbose_assert(*tmp==shred_byte, __STL_MSG_DBA_OVERRUN);
+    // that may be unfortunate, just in case
+    real_p->magic=deleted_magic;
+    memset((char*)p, shred_byte, n*sizeof(value_type));
+    allocator_type::deallocate(real_p, real_n);
+}
+
+template <class Alloc>
+void * 
+debug_alloc<Alloc>::reallocate(void *p, size_t old_sz, size_t new_sz) {
+    alloc_header * real_p = (alloc_header*)((char *)p - extra_before());
+    size_t extra = extra_before_chunk() + extra_after_chunk();
+    __stl_verbose_assert(real_p->magic != deleted_magic, __STL_MSG_DBA_DELETED_TWICE);
+    __stl_verbose_assert(real_p->magic == magic, __STL_MSG_DBA_NEVER_ALLOCATED);
+    __stl_verbose_assert(real_p->type_size == sizeof(value_type), 
+                         __STL_MSG_DBA_TYPE_MISMATCH);
+    __stl_verbose_assert(real_p->size == old_sz, __STL_MSG_DBA_SIZE_MISMATCH);
+    real_p = (alloc_header*)allocator_type::reallocate(real_p, old_sz + extra, 
+                                                       new_sz + extra);
+    real_p->size = new_sz;
+    return ((char*)real_p) + extra_before();
+}
+
+
+
+
+
+
+//////////////////////////////debug_alloc end /////////////////////////////////
+
 
 // That is an adaptor for working with any alloc provided below
 template<class T, class Alloc>
@@ -140,6 +197,7 @@ class simple_alloc {
 public:
     typedef typename Alloc::value_type alloc_value_type;
     typedef T value_type;
+    // 内存对齐   sizeof(alloc_value_type)的倍数
     static size_t chunk() { 
         return sizeof(T)/sizeof(alloc_value_type)+
             (size_t)(sizeof(T)%sizeof(alloc_value_type)>0);
@@ -231,55 +289,6 @@ __oom_handler_type __malloc_alloc<inst>::oom_handler=(__oom_handler_type)0 ;
 __DECLARE_INSTANCE(__oom_handler_type, __malloc_alloc<0>::oom_handler,0);
 # endif /* ( __STL_STATIC_TEMPLATE_DATA > 0 ) */
 
-template <class Alloc>
-void * debug_alloc<Alloc>::allocate(size_t n) {
-    size_t real_n = n + extra_before_chunk() + extra_after_chunk();
-    alloc_header *result = (alloc_header *)allocator_type::allocate(real_n);
-    memset((char*)result, shred_byte, real_n*sizeof(value_type));
-    result->magic = magic;
-    result->type_size = sizeof(value_type);
-    result->size = n;
-    return ((char*)result) + extra_before();
-}
-
-template <class Alloc>
-void debug_alloc<Alloc>::deallocate(void *p, size_t n) {
-    alloc_header * real_p = (alloc_header*)((char *)p - extra_before());
-    // check integrity
-    __stl_verbose_assert(real_p->magic != deleted_magic, __STL_MSG_DBA_DELETED_TWICE);
-    __stl_verbose_assert(real_p->magic == magic, __STL_MSG_DBA_NEVER_ALLOCATED);
-    __stl_verbose_assert(real_p->type_size == sizeof(value_type), 
-                         __STL_MSG_DBA_TYPE_MISMATCH);
-    __stl_verbose_assert(real_p->size == n, __STL_MSG_DBA_SIZE_MISMATCH);
-    // check pads on both sides
-    unsigned char* tmp;
-    for (tmp= (unsigned char*)(real_p+1); tmp < (unsigned char*)p; tmp++)
-        __stl_verbose_assert(*tmp==shred_byte, __STL_MSG_DBA_UNDERRUN);
-    size_t real_n= n + extra_before_chunk() + extra_after_chunk();
-    for (tmp= ((unsigned char*)p)+n*sizeof(value_type); 
-         tmp < ((unsigned char*)real_p)+real_n ; tmp++)
-        __stl_verbose_assert(*tmp==shred_byte, __STL_MSG_DBA_OVERRUN);
-    // that may be unfortunate, just in case
-    real_p->magic=deleted_magic;
-    memset((char*)p, shred_byte, n*sizeof(value_type));
-    allocator_type::deallocate(real_p, real_n);
-}
-
-template <class Alloc>
-void * 
-debug_alloc<Alloc>::reallocate(void *p, size_t old_sz, size_t new_sz) {
-    alloc_header * real_p = (alloc_header*)((char *)p - extra_before());
-    size_t extra = extra_before_chunk() + extra_after_chunk();
-    __stl_verbose_assert(real_p->magic != deleted_magic, __STL_MSG_DBA_DELETED_TWICE);
-    __stl_verbose_assert(real_p->magic == magic, __STL_MSG_DBA_NEVER_ALLOCATED);
-    __stl_verbose_assert(real_p->type_size == sizeof(value_type), 
-                         __STL_MSG_DBA_TYPE_MISMATCH);
-    __stl_verbose_assert(real_p->size == old_sz, __STL_MSG_DBA_SIZE_MISMATCH);
-    real_p = (alloc_header*)allocator_type::reallocate(real_p, old_sz + extra, 
-                                                       new_sz + extra);
-    real_p->size = new_sz;
-    return ((char*)real_p) + extra_before();
-}
 
 template <int inst>
 void * __malloc_alloc<inst>::oom_malloc(size_t n)
