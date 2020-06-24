@@ -20,7 +20,7 @@
 #define CSTL_SOURCE_CALLOC_MEM_POOL_H
 
 #include "cmalloc_alloc.h"
-
+#include <mutex>
 namespace chen {
 
     union cnode_alloc_obj;
@@ -74,11 +74,14 @@ namespace chen {
         static void * reallocate(void *p, size_t old_sz, size_t new_sz);
         static void show_info()
         {
-            printf("mem_pool use size = %lu\n", (size_t)(end_free - start_free));
-            printf("mem_pool size = %lu\n", heap_size);
+            printf("mem_pool node size = %llu\n", (size_t)(end_free - start_free));
+            printf("mem_pool use size = %llu\n", m_use_size);
+            printf("mem_pool size = %llu\n", heap_size);
         }
     private :
         static obj *  free_list[__NFREELISTS];
+        static  std::mutex m_lock;
+        static size_t  m_use_size;
     };
 
 
@@ -93,17 +96,21 @@ namespace chen {
         obj **  my_free_list;
         obj *  result;
 
+        m_use_size +=n;
         if (n > (size_t)__MAX_BYTES)
         {
             return(malloc_alloc::allocate(n));
         }
-        printf("allocate index = %lu\n", free_list_index(n));
+        printf("allocate index = %llu\n", free_list_index(n));
         my_free_list = free_list + free_list_index(n);
         // Acquire the lock here with a constructor call.
         // This ensures that it is released in exit or during stack
         // unwinding.
         /*REFERENCED*/
-
+        if (threads)
+        {
+            m_lock.lock();
+        }
         result = *my_free_list;
         if (result == 0)
         {
@@ -111,6 +118,10 @@ namespace chen {
             return r;
         }
         *my_free_list = result -> free_list_link;
+        if (threads)
+        {
+            m_lock.unlock();
+        }
         return (result);
     }
     template <bool threads, int inst>
@@ -119,18 +130,28 @@ namespace chen {
         obj *q = (obj *)p;
         obj  ** my_free_list;
 
+        m_use_size -=n;
         if (n > (size_t)__MAX_BYTES)
         {
+
             malloc_alloc::deallocate(p, n);
             return;
         }
-        printf("deallocate  index = %lu\n", free_list_index(n));
+        printf("deallocate  index = %llu\n", free_list_index(n));
         my_free_list = free_list + free_list_index(n);
         // acquire lock
 
+        if (threads)
+        {
+            m_lock.lock();
+        }
         q->free_list_link = *my_free_list;
         *my_free_list = q;
         // lock is released here
+        if (threads)
+        {
+            m_lock.unlock();
+        }
     }
 
 
@@ -172,7 +193,7 @@ namespace chen {
                 ((obj *)start_free) -> free_list_link = *my_free_list;
                 *my_free_list = (obj *)start_free;
             }
-            start_free = (char *)::malloc(bytes_to_get);
+            start_free = (char *)malloc_alloc::allocate(bytes_to_get);
             if (0 == start_free)
             {
                 int i;
@@ -227,6 +248,7 @@ namespace chen {
         my_free_list = free_list + free_list_index(n);
 
         /* Build free list in chunk */
+        // node list -->>>>>>  8 * ? = 128
         result = (obj *)chunk;
         *my_free_list = next_obj = (obj *)(chunk + n);
         for (i = 1; ; i++)
@@ -275,7 +297,8 @@ namespace chen {
 
     template <bool threads, int inst>
     size_t calloc<threads, inst>::heap_size = 0;
-
+    template <bool threads, int inst>
+    size_t calloc<threads, inst>::m_use_size = 0;
     template <bool threads, int inst>
     cnode_alloc_obj * calloc<threads, inst>::free_list[__NFREELISTS] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 //    struct cnode_alloc_obj {

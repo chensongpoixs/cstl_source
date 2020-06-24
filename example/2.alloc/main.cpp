@@ -51,21 +51,25 @@ int main(int argc, char *argv[])
 //    }
 
     printf("//////////////////////\n");
-    int las[] = {111, 344, 555, 666, 777};
-    std::vector<int , chen::callocator<int > > new_vec(las, las +5);
-    std::cout << "new_vec.capacity()  = " << new_vec.capacity() << std::endl;
-//    std::vector<uint64_t , chen::calloc_adaptor<uint64_t , chen::csingle_client_alloc> > ivec(la, la +5);
-    for (int i = 0; i < static_cast<int>(new_vec.size()); ++i)
+    uint64_t las[] = {111, 344, 555, 34343434, 777};
     {
-        std::cout << "new_veci =" << i << ", value = " << ivec[i] <<std::endl;
+        std::vector<uint64_t , chen::callocator<uint64_t > > new_vec(las, las +5);
+        std::cout << "new_vec.capacity()  = " << new_vec.capacity() << std::endl;
+//    std::vector<uint64_t , chen::calloc_adaptor<uint64_t , chen::csingle_client_alloc> > ivec(la, la +5);
+        for (int i = 0; i < static_cast<int>(new_vec.size()); ++i)
+        {
+            std::cout << "new_veci =" << i << ", value = " << new_vec[i] <<std::endl;
+        }
+        new_vec.clear();
     }
 
 
+
     std::cout << "chunk =  " << chunk()  << std::endl;
-
-    std::cout << "(sizeof(int)%sizeof(uint64_t) =" << sizeof(int)%sizeof(uint64_t) << std::endl;
-
-    printf("sizeof(uintint64) = %lu\n", sizeof(int));
-    printf("sizeof(uint64) = %lu\n", sizeof(uint64_t));
+//
+//    std::cout << "(sizeof(int)%sizeof(uint64_t) =" << sizeof(int)%sizeof(uint64_t) << std::endl;
+//
+//    printf("sizeof(uintint64) = %llu\n", sizeof(int));
+//    printf("sizeof(uint64) = %llu\n", sizeof(uint64_t));
     return EXIT_SUCCESS;
 }

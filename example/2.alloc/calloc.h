@@ -35,6 +35,7 @@ namespace  chen {
 //            T* temp = (T*)::operator new ((size_t)(size * sizeof(T)));
 
             T* temp = (T*) csingle_client_alloc::allocate((size_t)(size * sizeof(T)));
+            printf("alloc address =%p\n", temp);
             csingle_client_alloc::show_info();
             if (!temp)
             {

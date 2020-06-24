@@ -22,6 +22,7 @@
 #define _CMALLOC_ALLOC_H_
 
 #include <cstdlib>
+#include <cstdio>
 namespace chen
 {
     typedef void (* coom_handler_type)();
@@ -39,13 +40,15 @@ namespace chen
 
         static void * allocate(size_t n)
         {
+            printf("alloc size = %llu\n", n);
             void *result = ::malloc(n);
             if (0 == result) result = oom_malloc(n);
             return result;
         }
 
-        static void deallocate(void *p, size_t /* n */)
+        static void deallocate(void *p, size_t n /* n */)
         {
+            printf("free size = %llu\n", n);
             ::free((char*)p);
         }
 
@@ -105,7 +108,7 @@ namespace chen
                 exit(1);
             }
             (*my_malloc_handler)();
-            result = realloc((char*)p, n);
+            result = ::realloc((char*)p, n);
             if (result)
             {
                 return(result);
