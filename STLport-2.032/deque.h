@@ -262,6 +262,9 @@ struct __deque_iterator {
       __stl_debug_check(__check_same_owner(*this,x));    
     return (node == x.node) ? (cur < x.cur) : (node < x.node);
   }
+  /**
+   *  设置节点数据   []
+   */
   void set_node(map_pointer new_node) {
     node = new_node;
     first = *new_node;
@@ -347,8 +350,8 @@ protected:                      // Data members
   iterator start;
   iterator finish;
 
-  map_pointer map;
-  size_type map_size;
+  map_pointer map; //这边map是一个位图 注意哦
+  size_type map_size;  // 这边有点 奇葩没有记录使用没有使用的位图  只是记录位图的大小哦
 
 public:                         // Basic accessors
   iterator begin() { return start; }
@@ -505,7 +508,7 @@ public:                         // Constructor, destructor.
   }
 
 public:                         // push_* and pop_*
-  
+  // finish 中的数据
   void push_back(const value_type& t) {
     if (finish.cur != finish.last - 1) {
       construct(finish.cur, t);
@@ -703,9 +706,15 @@ protected:                      // Allocation of map and nodes
   //  add the nodes.  Can invalidate map pointers.  (And consequently, 
   //  deque iterators.)
 
-  void reserve_map_at_back (size_type nodes_to_add = 1) {
+  // 扩容 检查中央控制是否还有空余的没有使用   
+  void reserve_map_at_back (size_type nodes_to_add = 1) 
+  {
+
+     //位图尾节点的数据的有空间的大小 = map_size - (finish.node - map)   //没有空余位图时就分配位图一个吗？？？
     if (difference_type(nodes_to_add + 1) > map_size - (finish.node - map))
+    {
         reallocate_map(nodes_to_add, false);
+    }
     __stl_assert(finish.node + nodes_to_add < map + map_size);
   }
 
@@ -1002,14 +1011,17 @@ void deque<T, Alloc, BufSize>::clear() {
 }
 
 template <class T, class Alloc, size_t BufSize>
-void deque<T, Alloc, BufSize>::create_map_and_nodes(size_type num_elements) {
+void deque<T, Alloc, BufSize>::create_map_and_nodes(size_type num_elements) 
+{
+  // 这边正好整除 就会多分配一块节点 node 内存
   size_type num_nodes = num_elements / buffer_size() + 1;
 
   map_size = max(initial_map_size(), num_nodes + 2);
   map = map_allocator::allocate(map_size);
 
+  // 保证分配map节点中间的位置 ？？？？？  
   map_pointer nstart = map + (map_size - num_nodes) / 2;
-  map_pointer nfinish = nstart + num_nodes - 1;
+  map_pointer nfinish = nstart + num_nodes - 1; //上面如果正好整除就会多分配一块内存
     
   map_pointer cur;
 #     ifdef __STL_USE_EXCEPTIONS
@@ -1027,6 +1039,11 @@ void deque<T, Alloc, BufSize>::create_map_and_nodes(size_type num_elements) {
   }
 #     endif /* __STL_USE_EXCEPTIONS */
 
+  /**
+   *  位图  中央控制器
+   * |                        [start_address]                                                [finish_address]                                |
+   * 
+   */
   start.set_node(nstart);
   finish.set_node(nfinish);
   start.cur = start.first;
@@ -1616,6 +1633,11 @@ void deque<T, Alloc, BufSize>::destroy_nodes_at_back(iterator after_finish) {
     deallocate_node(*n);
 }
 
+/**
+ * 当前中央控制器的位图 使用完了 就分配 node_to_add个位图  
+ * @param nodes_to_add 增加位图的个数
+ * @param add_at_front 增加的位图是否放在位图头部
+ */
 template <class T, class Alloc, size_t BufSize>
 void deque<T, Alloc, BufSize>::reallocate_map(size_type nodes_to_add,
                                               bool add_at_front) {
@@ -1623,15 +1645,22 @@ void deque<T, Alloc, BufSize>::reallocate_map(size_type nodes_to_add,
   size_type new_num_nodes = old_num_nodes + nodes_to_add;
 
   map_pointer new_nstart;
-  if (map_size > 2 * new_num_nodes) {
-    new_nstart = map + (map_size - new_num_nodes) / 2 
-                     + (add_at_front ? nodes_to_add : 0);
+  // 当前位图的个数很大时哈哈， 但是尾位图或者头位图没有了的时候就需要调整位图中位置
+  if (map_size > 2 * new_num_nodes)
+  {
+    new_nstart = map + (map_size - new_num_nodes) / 2  + (add_at_front ? nodes_to_add : 0);
     if (new_nstart < start.node)
-      copy(start.node, finish.node + 1, new_nstart);
+    {
+       copy(start.node, finish.node + 1, new_nstart);
+    }
     else
+    {
       copy_backward(start.node, finish.node + 1, new_nstart + old_num_nodes);
+    }
   }
-  else {
+  else 
+  {
+    //扩容啦   灾难来啊  ^_^_^_^  它居然和vector容器一样的申请一个大的内存 把old_data拷贝到新的内存中     
     size_type new_map_size = map_size + max(map_size, nodes_to_add) + 2;
 
     map_pointer new_map = map_allocator::allocate(new_map_size);
