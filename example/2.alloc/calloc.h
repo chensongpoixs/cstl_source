@@ -22,6 +22,7 @@
 
 #include <iostream>
 //#include <new>
+#include "calloc_adaptor.h"
 #include "calloc_mem_pool.h"
 namespace  chen {
 
@@ -31,12 +32,13 @@ namespace  chen {
         inline T* __allocate(ptrdiff_t size, T*/*T**/)
         {
 //        set_new_handler(0);
-            std::cout << "sizeof(T) = " << sizeof(T) << std::endl;
+            std::cout << "size = " <<size << ", sizeof(T) = " << sizeof(T) << std::endl;
 //            T* temp = (T*)::operator new ((size_t)(size * sizeof(T)));
 
-            T* temp = (T*) csingle_client_alloc::allocate((size_t)(size * sizeof(T)));
+           //()
+            T* temp = (T*)  calloc_adaptor<T, csingle_client_alloc>::allocate ((size_t)(size /** sizeof(T)*/));// csingle_client_alloc::allocate((size_t)(size * sizeof(T)));
             printf("alloc address =%p\n", temp);
-            csingle_client_alloc::show_info();
+            calloc_adaptor<T, csingle_client_alloc>::show_info();
             if (!temp)
             {
                 std::cerr << "alloc failed !!!" << std::endl;
@@ -50,8 +52,9 @@ namespace  chen {
 //            ::operator delete (buffer);
             // 释放的内存的大小
             std::cout << "delete size = " << size * sizeof(T) << std::endl;
-            csingle_client_alloc::deallocate(buffer, size * sizeof(T));
-            csingle_client_alloc::show_info();
+            calloc_adaptor<T, csingle_client_alloc>::deallocate(buffer, size /** sizeof(T)*/);
+            //csingle_client_alloc::deallocate(buffer, size * sizeof(T));
+            calloc_adaptor<T, csingle_client_alloc>::show_info();
         }
 
         template <class T1, class T2>

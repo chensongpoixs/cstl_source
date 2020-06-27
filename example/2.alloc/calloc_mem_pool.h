@@ -27,11 +27,11 @@ namespace chen {
     union cnode_alloc_obj
     {
         union cnode_alloc_obj* free_list_link;
-        char client_data[1];
+        char client_data[1]; // info address
     };
 
 
-    template <bool trheads, int inst>
+    template <bool threads, int inst>
     class calloc
     {
     public:
@@ -184,6 +184,7 @@ namespace chen {
         }
         else
             {
+                // 这边 heap_size  >> 4 ====> 扩容作准备的  内存池
             size_t bytes_to_get = 2 * total_bytes + round_up(heap_size >> 4);
             // Try to make use of the left-over piece.
             if (bytes_left > 0)
@@ -236,7 +237,7 @@ namespace chen {
     {
         int nobjs = 20;
         char * chunk = chunk_alloc(n, nobjs);
-        obj  ** my_free_list;
+        obj  *  * my_free_list;
         obj * result;
         obj * current_obj, * next_obj;
         int i;

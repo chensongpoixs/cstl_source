@@ -58,6 +58,7 @@ namespace chen
 //  have built-in __types_traits support, and essential for compilers
 //  that don't.
 
+//#define
     template <>
     struct ctype_traits<char> {
         typedef ctrue_type    has_trivial_default_constructor;

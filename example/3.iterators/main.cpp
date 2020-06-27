@@ -1,9 +1,9 @@
 /***********************************************************************************************
-	created: 		2020-06-24
+	created: 		2020/6/25
 
 	author:			chensong
 
-	purpose:		calloc_adaptor
+	purpose:		calloc_mem_pool
 我可能会遇到很多的人，听他们讲好2多的故事，我来写成故事或编成歌，用我学来的各种乐器演奏它。
 然后还可能在一个国家遇到一个心仪我的姑娘，她可能会被我帅气的外表捕获，又会被我深邃的内涵吸引，在某个下雨的夜晚，她会全身淋透然后要在我狭小的住处换身上的湿衣服。
 3小时候后她告诉我她其实是这个国家的公主，她愿意向父皇求婚。我不得已告诉她我是穿越而来的男主角，我始终要回到自己的世界。
@@ -15,49 +15,35 @@
 沿着自己的回忆，一个个的场景忽闪而过，最后发现，我的本心，在我写代码的时候，会回来。
 安静，淡然，代码就是我的一切，写代码就是我本心回归的最好方式，我还没找到本心猎手，但我相信，顺着这个线索，我一定能顺藤摸瓜，把他揪出来。
 ************************************************************************************************/
+
 //
 
-#ifndef CSTL_SOURCE_CALLOC_ADAPTOR_H
-#define CSTL_SOURCE_CALLOC_ADAPTOR_H
 
-#include "calloc_mem_pool.h"
-namespace chen {
+#include <iostream>
+#include <vector>
+#include <map>
+#include <sys/stat.h>
+#include <algorithm>
 
-    template <class T, class Alloc>
-    class calloc_adaptor
+int main(int argc, char *argv[])
+{
+    std::map<int, int> map;
+    map[343434] = 43;
+//    struct stat m_file_info;
+//    stat("CMakeLists.txt",&m_file_info);
+
+
+    std::vector<int> m_data;
+    for (int i = 0; i < 100; ++i)
     {
-    public:
-        typedef Alloc alloc_type;
+        m_data.emplace_back(i );
+    }
 
-        typedef typename Alloc::value_type alloc_value_type;
-        typedef T value_type;
-        // 内存对齐 取最大内存取 sizeof(alloc_value_type)的倍数
-        static size_t chunk()
-        {
-            return sizeof(T)/sizeof(alloc_value_type)+ (size_t)(sizeof(T)%sizeof(alloc_value_type)>0);
-        }
-        static T* allocate(size_t n)
-        {
-            return 0 == n ? 0 : (T*) alloc_type::allocate(n * chunk());
-        }
-        static T* allocate(void)
-        {
-            return (T*) alloc_type::allocate(chunk());
-        }
-        static void deallocate(T * p, size_t n)
-        {
-            if (0 != n) alloc_type::deallocate(/* (alloc_value_type*) */ p, n * chunk());
-        }
-        static void deallocate(T * p)
-        {
-            alloc_type::deallocate(/* (alloc_value_type*) */p, chunk());
-        }
-        static void show_info()
-        {
-            alloc_type::show_info();
-        }
-    };
-
-
-} // namespace chen
-#endif //CSTL_SOURCE_CALLOC_ADAPTOR_H
+    std::vector<int>::iterator iter  = std::find(m_data.begin(), m_data.end(), 45);
+    if (iter != m_data.end())
+    {
+        printf("find data 45 !!\n");
+    }
+    std::cout << " vec[565] == " <<  map[343434] <<std::endl;
+    return EXIT_SUCCESS;
+}
