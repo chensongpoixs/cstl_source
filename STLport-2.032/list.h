@@ -207,6 +207,10 @@ protected:
     link_type get_node() { return list_node_allocator::allocate(); }
     void put_node(link_type p) { list_node_allocator::deallocate(p); }
 
+    /**
+     *  
+     * @param  __false_type : check is class  traits  类型萃取
+     */
     link_type __create_node(const T& x, __false_type) {
       link_type p = get_node();
 #         ifdef __STL_USE_EXCEPTIONS
@@ -225,7 +229,17 @@ protected:
     }
     link_type __create_node(const T& x, __true_type) {
       link_type p = get_node();
-      construct(&p->data, x);
+      /**
+       // int , char , long 类型是  这边为也调用 construct函数 构造函数呢！！！！！！！ 调用 new 赋值 
+        int * ptr = (int*)malloc(sizeof(int));
+        new(ptr) int(5);
+        if (ptr)
+        {
+          printf("ptr = %d\n", *ptr);
+        }
+       */
+
+      construct(&p->data, x);  
       return p;
     }
     link_type create_node(const T& x) {
@@ -361,6 +375,17 @@ public:
         __stl_debug_do(iter_list.swap_owners(x.iter_list, true));
 	__STL_NAMESPACE::swap(node, x.node);
     }
+    /**
+     *指定位置的迭代器插入一个数据的节点 的操作    
+     * 1. 创建节点
+     * 2. 第一步: 创建的新的节点下一个节点指针和父节点的指针改成position节点指针的指向（新的节点下一个节点的指针指向position迭代器的节点, 新的节点的父节点指向 position上一个节点的指针）
+     * 3. 第二步: 改position节点父节点的数据指针下一个节点的指针的指向 ， 指向新的节点
+     * 4. 第三步: 改position节点父节点指针的指向， 指向新的节点
+     *  
+     * [修改自己prev和next指针的指向， 二: 修改上一个节点的数据的下一个数据   ]
+     * 
+     * 
+     */
     iterator insert(iterator position, const T& x) {
       __stl_debug_check(__check_if_owner(&iter_list,position));
       link_type tmp = create_node(x);
@@ -439,15 +464,25 @@ public:
     list<T, Alloc>& operator=(const list<T, Alloc>& x);
 
 protected:
-    void transfer(iterator position, iterator first, iterator last) {
-      if (position.node != last.node) {
-	(*(link_type((*last.node).prev))).next = position.node;
-	(*(link_type((*first.node).prev))).next = last.node;
-	(*(link_type((*position.node).prev))).next = first.node;  
-	link_type tmp = link_type((*position.node).prev);
-	(*position.node).prev = (*last.node).prev;
-	(*last.node).prev = (*first.node).prev; 
-	(*first.node).prev = tmp;
+    /**
+     *  将[first, last) 转移到position前面
+     *    
+     * 
+     * @param position
+     * @param first
+     * @param last 
+     */
+    void transfer(iterator position, iterator first, iterator last) 
+    {
+      if (position.node != last.node) 
+      {
+	        (*(link_type((*last.node).prev))).next = position.node;   
+	        (*(link_type((*first.node).prev))).next = last.node;  // 原来哪个链表结构 不破坏 
+	        (*(link_type((*position.node).prev))).next = first.node;  
+	        link_type tmp = link_type((*position.node).prev);
+	        (*position.node).prev = (*last.node).prev;
+	        (*last.node).prev = (*first.node).prev;  // 原来哪个链表 结构 不破坏
+	        (*first.node).prev = tmp;
       }
     }
 
@@ -659,14 +694,22 @@ void list<T, Alloc>::merge(list<T, Alloc>& x) {
   iterator first2 = x.begin();
   iterator last2 = x.end();
   while (first1 != last1 && first2 != last2)
-    if (*first2 < *first1) {
+  {
+    if (*first2 < *first1) 
+    {
       iterator next = first2;
       transfer(first1, first2, ++next);
       first2 = next;
     }
     else
-      ++first1;
-  if (first2 != last2) transfer(last1, first2, last2);
+    {
+       ++first1;
+    }
+  }
+  if (first2 != last2) 
+  {
+    transfer(last1, first2, last2);
+  }
   __stl_debug_do(x.invalidate_all());
 }
 
