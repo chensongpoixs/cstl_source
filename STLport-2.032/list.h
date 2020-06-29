@@ -671,7 +671,9 @@ void list<T, Alloc>::remove(const T& value) {
     first = next;
   }
 }
-
+/**
+ * 链表必须是有序的才可以去重
+ */ 
 template <class T, class Alloc>
 void list<T, Alloc>::unique() {
   iterator first = begin();
@@ -693,6 +695,7 @@ void list<T, Alloc>::merge(list<T, Alloc>& x) {
   iterator last1 = end();
   iterator first2 = x.begin();
   iterator last2 = x.end();
+  // 需要合并的list是有序的 
   while (first1 != last1 && first2 != last2)
   {
     if (*first2 < *first1) 
@@ -713,29 +716,39 @@ void list<T, Alloc>::merge(list<T, Alloc>& x) {
   __stl_debug_do(x.invalidate_all());
 }
 
+/**
+ * 链表 倒序
+ * 挺会玩的 始终在链表头插入   链表就倒序了      
+ */
 template <class T, class Alloc>
 void list<T, Alloc>::reverse() {
   if (node->next == node || link_type(node->next)->next == node) return;
   iterator first = begin();
   ++first;
-  while (first != end()) {
+  while (first != end()) 
+  {
     iterator old = first;
     ++first;
     transfer(begin(), old, first);
   }
   __stl_debug_do(invalidate_all());
 }    
-
+/**
+ * 链表不支持rand 访问 所以需要排序
+ *  quick sort
+ */ 
 template <class T, class Alloc>
 void list<T, Alloc>::sort() {
   if (node->next == node || link_type(node->next)->next == node) return;
   list<T, Alloc> carry;
   list<T, Alloc> counter[64];
   int fill = 0;
-  while (!empty()) {
+  while (!empty()) 
+  {
     carry.splice(carry.begin(), *this, begin());
     int i = 0;
-    while(i < fill && !counter[i].empty()) {
+    while(i < fill && !counter[i].empty()) 
+    {
       counter[i].merge(carry);
       carry.swap(counter[i++]);
     }
@@ -743,7 +756,10 @@ void list<T, Alloc>::sort() {
     if (i == fill) ++fill;
   } 
 
-  for (int i = 1; i < fill; ++i) counter[i].merge(counter[i-1]);
+  for (int i = 1; i < fill; ++i) 
+  {
+    counter[i].merge(counter[i-1]);
+  }
   swap(counter[fill-1]);
   __stl_debug_do(invalidate_all());
 }
