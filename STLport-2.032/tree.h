@@ -103,13 +103,19 @@ struct __rb_tree_node_base
 
   static base_ptr minimum(base_ptr x)
   {
-    while (x->left != 0) x = x->left;
+    while (x->left != 0) 
+    {
+      x = x->left;
+    }
     return x;
   }
 
   static base_ptr maximum(base_ptr x)
   {
-    while (x->right != 0) x = x->right;
+    while (x->right != 0)
+    {
+       x = x->right;
+    }
     return x;
   }
 };
@@ -118,7 +124,7 @@ template <class Value>
 struct __rb_tree_node : public __rb_tree_node_base
 {
   typedef __rb_tree_node<Value>* link_type;
-  Value value_field;
+  Value value_field; // 节点值
 };
 
 
@@ -141,42 +147,62 @@ struct __rb_tree_base_iterator
   __rb_tree_base_iterator(const __safe_base* root, base_ptr p) : 
       __safe_base(root), node(p) {}
 # endif
+  //前进
   void increment()
   {
     __stl_verbose_assert(valid(), __STL_MSG_INVALID_ITERATOR); 
     __stl_verbose_assert(node!=owner_node(), __STL_MSG_INVALID_ADVANCE); 
-    if (node->right != 0) {
+    if (node->right != 0) 
+    {
       node = node->right;
       while (node->left != 0)
+      {
         node = node->left;
+      }
     }
-    else {
+    else 
+    {
       base_ptr y = node->parent;
-      while (node == y->right) {
+      while (node == y->right)   //向上查找??????
+      {
+        /**这个情况是在(@)某一个root下的left最right边时没有节点需要向上查找最大值&
+         *        &
+         *    #        # 
+         *  #   #    #    #
+         * # # # @  #  # #  #
+         */
         node = y;
         y = y->parent;
       }
       if (node->right != y)
+      {
         node = y;
+      }
     }
   }
-
+  //后退
   void decrement()
   {
     __stl_verbose_assert(valid(), __STL_MSG_INVALID_ITERATOR); 
     __stl_verbose_assert(node!=owner_node()->left, __STL_MSG_INVALID_ADVANCE); 
-    if (node->color == __rb_tree_red &&
-        node->parent->parent == node)
-      node = node->right;
-    else if (node->left != 0) {
+    if (node->color == __rb_tree_red && node->parent->parent == node) // rb ????? parent->parent == node ?????
+    {
+       node = node->right;
+    }
+    else if (node->left != 0) 
+    {
       base_ptr y = node->left;
       while (y->right != 0)
-        y = y->right;
+      {
+         y = y->right;
+      }
       node = y;
     }
-    else {
+    else 
+    {
       base_ptr y = node->parent;
-      while (node == y->left) {
+      while (node == y->left) 
+      {
         node = y;
         y = y->parent;
       }
@@ -300,18 +326,24 @@ __rb_tree_rotate_right(__rb_tree_node_base* x, __rb_tree_node_base*& root)
 inline void 
 __rb_tree_rebalance(__rb_tree_node_base* x, __rb_tree_node_base*& root)
 {
-  x->color = __rb_tree_red;
-  while (x != root && x->parent->color == __rb_tree_red) {
-    if (x->parent == x->parent->parent->left) {
+  x->color = __rb_tree_red; // 新节点为红色
+  while (x != root && x->parent->color == __rb_tree_red) 
+  {
+    //父节点为红色时的处理
+    if (x->parent == x->parent->parent->left) 
+    {
       __rb_tree_node_base* y = x->parent->parent->right;
-      if (y && y->color == __rb_tree_red) {
+      if (y && y->color == __rb_tree_red) 
+      {
         x->parent->color = __rb_tree_black;
         y->color = __rb_tree_black;
         x->parent->parent->color = __rb_tree_red;
         x = x->parent->parent;
       }
-      else {
-        if (x == x->parent->right) {
+      else 
+      {
+        if (x == x->parent->right) 
+        {
           x = x->parent;
           __rb_tree_rotate_left(x, root);
         }
@@ -320,16 +352,20 @@ __rb_tree_rebalance(__rb_tree_node_base* x, __rb_tree_node_base*& root)
         __rb_tree_rotate_right(x->parent->parent, root);
       }
     }
-    else {
+    else 
+    {
       __rb_tree_node_base* y = x->parent->parent->left;
-      if (y && y->color == __rb_tree_red) {
+      if (y && y->color == __rb_tree_red) 
+      {
         x->parent->color = __rb_tree_black;
         y->color = __rb_tree_black;
         x->parent->parent->color = __rb_tree_red;
         x = x->parent->parent;
       }
-      else {
-        if (x == x->parent->left) {
+      else 
+      {
+        if (x == x->parent->left) 
+        {
           x = x->parent;
           __rb_tree_rotate_right(x, root);
         }
@@ -537,11 +573,12 @@ protected:
     size_type node_count; // keeps track of size of tree
     link_type header;  
     Compare key_compare;
-
+    // 以下三个函数方便获取header的成员
     link_type& root() const { return (link_type&) header->parent; }
     link_type& leftmost() const { return (link_type&) header->left; }
     link_type& rightmost() const { return (link_type&) header->right; }
 
+    // 方便获取节点x的成员
     static link_type& left(link_type x) { return (link_type&)(x->left); }
     static link_type& right(link_type x) { return (link_type&)(x->right); }
     static link_type& parent(link_type x) { return (link_type&)(x->parent); }
@@ -811,7 +848,11 @@ operator=(const rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& x) {
   }
   return *this;
 }
-
+/**
+ * @param x_: 为新值插入点
+ * @param y_:为插入点之父节点
+ * @param v: 为新的值
+ */
 template <class Key, class Value, class KeyOfValue, class Compare, class Alloc>
 __iterator__
 rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::
@@ -820,21 +861,28 @@ __insert(__base_ptr__ x_, __base_ptr__ y_, const __value_type__& v) {
   link_type y = (link_type) y_;
   link_type z;
 
-  if (y == header || x != 0 || key_compare(KeyOfValue()(v), key(y))) {
+  if (y == header || x != 0 || key_compare(KeyOfValue()(v), key(y))) 
+  {
     z = create_node(v);
     left(y) = z;                // also makes leftmost() = z when y == header
-    if (y == header) {
+    if (y == header) 
+    {
       root() = z;
       rightmost() = z;
     }
     else if (y == leftmost())
+    {
       leftmost() = z;           // maintain leftmost() pointing to min node
+    }
   }
-  else {
+  else 
+  {
     z = create_node(v);
     right(y) = z;
     if (y == rightmost())
+    {
       rightmost() = z;          // maintain rightmost() pointing to max node
+    }
   }
   parent(z) = y;
   left(z) = 0;
@@ -872,12 +920,20 @@ rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::insert_unique(const __value_typ
     }
     iterator j = make_iterator(y);   
     if (comp)
-        if (j == begin())     
-            return pair<iterator,bool>(__insert(x, y, v), true);
-        else
-            --j;
-    if (key_compare(key(j.node), KeyOfValue()(v)))
+    {
+      if (j == begin())     
+      {
         return pair<iterator,bool>(__insert(x, y, v), true);
+      }
+      else
+      {
+        --j;
+      }
+    }
+    if (key_compare(key(j.node), KeyOfValue()(v)))
+    {
+      return pair<iterator,bool>(__insert(x, y, v), true);
+    }
     return pair<iterator,bool>(j, false);
 }
 
