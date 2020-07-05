@@ -736,24 +736,36 @@ void list<T, Alloc>::reverse() {
 /**
  * 链表不支持rand 访问 所以需要排序
  *  quick sort
+ *  思想 :  每一次从链表取第一个节点的数据 放到临时数组中链表中进行排序   临时每个数组链表都是有序的所以在合并的就会找到合适位置插入进入了   最后在把临时数组链表全部合并最后一个链表中
  */ 
 template <class T, class Alloc>
 void list<T, Alloc>::sort() {
-  if (node->next == node || link_type(node->next)->next == node) return;
+  if (node->next == node || link_type(node->next)->next == node) 
+  {
+    return;
+  }
   list<T, Alloc> carry;
   list<T, Alloc> counter[64];
   int fill = 0;
   while (!empty()) 
   {
+    //移动一个节点到carray链表中  每次拿链表第一个节点的数据作为<快排的切点> position比较节点
     carry.splice(carry.begin(), *this, begin());
     int i = 0;
+    // 
     while(i < fill && !counter[i].empty()) 
     {
+      //临时的数组array的合并到counter[i]中 在合并的时候就是在排序了   找到适合位置插入节点数据
       counter[i].merge(carry);
+      //把counter[i]的链表复制到carray数组中
       carry.swap(counter[i++]);
     }
+    //临时链表移动到counter数组中
     carry.swap(counter[i]);         
-    if (i == fill) ++fill;
+    if (i == fill)
+    {
+       ++fill;
+    }
   } 
 
   for (int i = 1; i < fill; ++i) 
