@@ -62,7 +62,9 @@ __BEGIN_STL_NAMESPACE
 # endif
 
 template <class Key> struct hash { };
-
+/**
+ * 计算hash值  这边也是 有个5的
+ */
 inline size_t __stl_hash_string(const char* s)
 {
   unsigned long h = 0; 
